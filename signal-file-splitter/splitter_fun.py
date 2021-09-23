@@ -7,22 +7,22 @@ def find_all(string: bytes, pattern: bytes) -> List[int]:
     i = string.find(pattern)
     while i != -1:
         result.append(i)
-        i = string.find(pattern, i + 1)
+        i = string.find(pattern, i + 32)
     return result
 
 
 def convert_int(source: bytes) -> bytes:
-    if source[0] > 127:
+    if source[2] > 127:
         new_byte = 255
     else:
         new_byte = 0
-    return bytes([new_byte, source[0], source[1], source[2]])
+    return bytes([source[0], source[1], source[2], new_byte])
 
 
 def split_data(data: bytes, starts: List[int], size: int) -> List[bytearray]:
     # split data, pass size byte for each starts
-    new_size = (len(data) - 32 * len(starts)) // 3
-    result = [bytearray(new_size), bytearray(new_size), bytearray(new_size), bytearray(new_size)]
+    new_size = (len(data) - 32 * len(starts)) * 3 // 15
+    result = [bytearray(new_size), bytearray(new_size), bytearray(new_size), bytearray(new_size), bytearray(new_size)]
     start_iter = iter(starts)
     current_start = next(start_iter)
     i = 0
@@ -36,7 +36,8 @@ def split_data(data: bytes, starts: List[int], size: int) -> List[bytearray]:
             result[1][j:j + 4] = convert_int(data[i + 3:i + 6])
             result[2][j:j + 4] = convert_int(data[i + 6:i + 9])
             result[3][j:j + 4] = convert_int(data[i + 9:i + 12])
-            i = i + 12
+            result[4][j:j + 4] = convert_int(data[i + 12:i + 15])
+            i = i + 15      # 5 signal * 3  bytes
             j = j + 4
     return result
 
